@@ -1,1 +1,2 @@
-Hello, to run this sim you need to install python 3.10+ and pygame 2.5+ !
+<h1>solar-system-sim</h1> 
+Python simulation based on numPy and pygame.
