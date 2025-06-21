@@ -74,7 +74,7 @@ def get_color(color_name):
     return getattr(info, color_name, (255, 255, 255))
 
 
-df = pd.read_csv("initial_planets.csv")
+df = pd.read_csv("src/initial_planets.csv")
 
 planets = [
     CelestialObject(
