@@ -1,16 +1,13 @@
 import pygame
 import numpy as np
-import timeit
 
 import draw
 import info
 from moon import Moon
 from Planet import CelestialObject, planets
 
-# Pygame Initialization
 pygame.init()
 
-# Constants
 WIN = pygame.display.set_mode((info.WIDTH, info.HEIGHT))
 FONT = pygame.font.SysFont("comicsans", 16)
 RESOLUTION = np.array((info.WIDTH, info.HEIGHT))
@@ -47,8 +44,16 @@ def handle_events():
             info.mouse_motion = np.array([0.0, 0.0])
 
         if event.type == pygame.MOUSEWHEEL:
+            mouse_screen = np.array(pygame.mouse.get_pos(), dtype=float)
+            
+            # Convert to world position before zoom
+            world_pos = (mouse_screen - info.mouse_motion) / CelestialObject.scale
+            
             zoom_factor = 1.3 ** event.y
             CelestialObject.scale *= zoom_factor
+
+            # Adjust camera (info.mouse_motion) so that world_pos stays under mouse
+            info.mouse_motion = mouse_screen - world_pos * CelestialObject.scale
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             moving = True
@@ -73,6 +78,8 @@ def main():
 
     running = True
     clock = pygame.time.Clock()
+    sun_pos = planets[0].position
+    info.mouse_motion = RESOLUTION / 2 - sun_pos * CelestialObject.scale
 
     while running:
         WIN.fill(info.COLOR_BLACK)
@@ -95,13 +102,4 @@ def main():
     pygame.quit()
 
 if __name__ == "__main__":
-    runtime_1 = timeit.timeit(lambda: (CelestialObject.update_planets(deltatime)), number=100)
-
-    runtime_2 = timeit.timeit(lambda: (Moon.update_moons(deltatime)), number=100)
-
-    runtime_3 = timeit.timeit(lambda: (draw.display_information(deltatime)), number=100)
-    
-    print(f"Runtime updating planets: {runtime_1:.6f} s")
-    print(f"Runtime updating moons: {runtime_2:.6f} s")
-    print(f"Runtime displaying information: {runtime_3:.6f} s")
     main()

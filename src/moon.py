@@ -14,11 +14,10 @@ class Moon(CelestialObject):
         self.distance = distance
         self.orbital_angle = 0  
 
-        # If orbital period is not provided, calculate it using Kepler's Third Law
         if orbital_period is None:
             self.orbital_period = 2 * np.pi * np.sqrt(distance**3 / (info.G * parent_planet.mass))
         else:
-            self.orbital_period = orbital_period  # Use provided orbital period
+            self.orbital_period = orbital_period  
 
     def draw(self):
         """Draw the moon at its current position relative to its parent planet."""
@@ -28,7 +27,7 @@ class Moon(CelestialObject):
         ]) * self.distance
 
         abs_moon_pos = self.parent_planet.position + offset
-        moon_pos = self.calculate_position(abs_moon_pos)
+        moon_pos = self.get_screen_position(abs_moon_pos)
 
         pygame.draw.circle(WIN, self.color, moon_pos.astype(int), self.radius)
 
