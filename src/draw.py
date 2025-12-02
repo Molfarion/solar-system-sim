@@ -1,4 +1,4 @@
-from Planet import CelestialObject
+from celestial_object import CelestialObject
 import info
 import pygame 
 
