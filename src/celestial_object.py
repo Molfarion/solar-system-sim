@@ -3,9 +3,6 @@ import pygame
 from collections import deque
 import info
 
-WIN = pygame.display.set_mode((info.WIDTH, info.HEIGHT))
-FONT = pygame.font.SysFont("comicsans", 16)
-
 class CelestialObject:
     scale = 150 / info.AU
     sun = None   # set in main.py
@@ -40,25 +37,30 @@ class CelestialObject:
     def get_screen_position(self):
         return self.position * self.scale + info.mouse_motion
 
-    def draw(self):
+    def draw(self, win, font):
         pos = self.get_screen_position().astype(int)
         radius_px = max(int(self.radius), 3)
-        pygame.draw.circle(WIN, self.color, pos, radius_px)
+        pygame.draw.circle(win, self.color, pos, radius_px)
 
         if len(self.orbit) > 2:
             pts = (np.array(self.orbit) * self.scale + info.mouse_motion).astype(int)
-            pygame.draw.lines(WIN, self.color, False, pts, 1)
+            pygame.draw.lines(win, self.color, False, pts, 1)
 
-    def draw_name(self):
+    def draw_name(self, win, font):
         x, y = self.get_screen_position()
-        label = FONT.render(self.name, True, info.COLOR_WHITE)
-        WIN.blit(label, (x - label.get_width() / 2, y - 25))
+        label = font.render(self.name, True, info.COLOR_WHITE)
+        win.blit(label, (x - label.get_width() / 2, y - 25))
 
-    def show_distances(self):
+    def show_distances(self, win, font):
         if CelestialObject.sun is None or self is CelestialObject.sun:
             return
 
         x, y = self.get_screen_position()
-        au = np.linalg.norm(self.position - CelestialObject.sun.position) / info.AU
-        text = FONT.render(f"{au:.4f} AU", True, info.COLOR_WHITE)
-        WIN.blit(text, (x - text.get_width() / 2, y - text.get_height() / 2 - 20))
+        
+        distance_vector = self.position - CelestialObject.sun.position
+        distance_au = np.linalg.norm(distance_vector) / info.AU
+
+        text = font.render(f"{distance_au:.4f} AU", True, info.COLOR_WHITE)
+        text_y = y - text.get_height() / 2 - 45
+        
+        win.blit(text, (x - text.get_width() / 2, text_y))

@@ -1,11 +1,5 @@
 import numpy as np
-import pygame
-import info
 from celestial_object import CelestialObject
-
-pygame.init()
-FONT = pygame.font.SysFont("comicsans", 16)
-WIN = pygame.display.set_mode((info.WIDTH, info.HEIGHT))
 
 class Moon(CelestialObject):
     def __init__(self, name, parent, distance, mass, radius, color, relative_velocity):
@@ -18,6 +12,6 @@ class Moon(CelestialObject):
         super().__init__(name, initial_pos, initial_vel, mass, color, radius)
         self.parent = parent
 
-    def draw(self):
+    def draw(self, win, font):
         """Draw the moon and its orbit trail."""
-        super().draw()
+        super().draw(win, font)
