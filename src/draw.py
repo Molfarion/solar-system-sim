@@ -13,6 +13,10 @@ def generate_stars(num_stars=400):
         stars.append((x, y, radius))
     return stars
 
+def indicator_for_planet(win, selected_body):
+    pygame.draw.circle(win, (255, 255, 255), 
+                             selected_body.screen_pos.astype(int), 
+                             int(selected_body.radius + 5), 1)
 def draw_stars(stars, win):
     for x, y, radius in stars:
         pygame.draw.circle(win, info.COLOR_WHITE, (int(x), int(y)), int(radius))

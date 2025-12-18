@@ -1,6 +1,5 @@
 import pygame
 import numpy as np
-
 import info
 import draw
 from celestial_object import CelestialObject
@@ -10,65 +9,77 @@ pygame.init()
 
 planets = load_planets()
 moons = create_moons(planets)
-bodies = planets + moons  
+bodies = planets + moons
 
 WIN = pygame.display.set_mode((info.WIDTH, info.HEIGHT))
 FONT = pygame.font.SysFont("comicsans", 16)
 RESOLUTION = np.array((info.WIDTH, info.HEIGHT))
+SUBSTEPS = 10  # Number of integration steps per frame for stability
 
-SUBSTEPS = 10           # Number of integration steps per frame for stability
-show_name = True        
-moving = False          
-deltatime = 86400      
-info.TOTAL_TIME_ELAPSED = 0.0 
+selected_body = None
+show_name = True
+dragging = False  
+deltatime = 86400
+info.TOTAL_TIME_ELAPSED = 0.0
+
+def lock_camera_to_body(body):
+    """Hard-lock camera so body stays at screen center."""
+    info.mouse_motion[:] = RESOLUTION / 2 - body.position * CelestialObject.scale
 
 def handle_events():
     """Handles user input events (camera control, speed control, toggles)."""
-    global show_name, moving, deltatime
-
+    global show_name, dragging, deltatime, selected_body  
+    
     for event in pygame.event.get():
-        
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             return False
-
+        
         if event.type == pygame.KEYDOWN:
             match event.key:
                 case pygame.K_z:
                     show_name = not show_name
-                
-                case pygame.K_PLUS | pygame.K_EQUALS:  # Speed Up
+                case pygame.K_PLUS | pygame.K_EQUALS:
                     deltatime *= 1.5
-                case pygame.K_MINUS:                   # Slow Down
+                case pygame.K_MINUS:
                     deltatime /= 1.5
-                case pygame.K_SPACE:                   # Toggle Pause
+                case pygame.K_SPACE:
                     if deltatime != 0:
                         info.last_deltatime = deltatime
                         deltatime = 0
                     else:
-                        deltatime = getattr(info, 'last_deltatime', 86400) # Default to 1 day
-                case pygame.K_c:                     
-                    info.mouse_motion[:] = np.array([info.WIDTH/2, info.HEIGHT/2])
+                        deltatime = getattr(info, 'last_deltatime', 86400)  # Default to 1 day
+                case pygame.K_c:
+                    info.mouse_motion[:] = RESOLUTION / 2
+                    selected_body = None  
         
-        # Mouse Zoom
-        if event.type == pygame.MOUSEWHEEL:
-            mouse_screen = np.array(pygame.mouse.get_pos(), dtype=float)
-
-            # Preserve the world point under the cursor during zoom
-            world_pos = (mouse_screen - info.mouse_motion) / CelestialObject.scale
-
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            dragging = True
+            mx, my = pygame.mouse.get_pos()
+            selected_body = None
+            for body in bodies:
+                dist = np.hypot(*(body.screen_pos - np.array([mx, my])))
+                if dist < body.radius * CelestialObject.scale + 20:
+                    selected_body = body
+                    break
+        
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            dragging = False
+        
+        elif event.type == pygame.MOUSEMOTION and dragging:
+            selected_body = None
+            info.mouse_motion += np.array(event.rel)
+        
+        elif event.type == pygame.MOUSEWHEEL:
             zoom_factor = 1.3 ** event.y
             CelestialObject.scale *= zoom_factor
 
-            # Recalculate camera offset
-            info.mouse_motion = mouse_screen - world_pos * CelestialObject.scale
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            moving = True
-        elif event.type == pygame.MOUSEBUTTONUP:
-            moving = False
-        elif event.type == pygame.MOUSEMOTION and moving:
-            info.mouse_motion += np.array(event.rel)
-
+            if selected_body is None:
+                # Mouse-anchored zoom only when not locked to a body
+                old_scale = CelestialObject.scale / zoom_factor
+                mouse_screen = np.array(pygame.mouse.get_pos(), dtype=float)
+                world_pos = (mouse_screen - info.mouse_motion) / old_scale
+                info.mouse_motion = mouse_screen - world_pos * CelestialObject.scale
+    
     return True
 
 def display_controls():
@@ -79,30 +90,26 @@ def display_controls():
             WIN.blit(surf, (10, info.HEIGHT - 150 + i * 20))
 
 def main():
-    global deltatime
-
+    global deltatime, selected_body  
+    
     clock = pygame.time.Clock()
     running = True
-    
     sun = planets[0]
     CelestialObject.sun = sun
-    info.mouse_motion[:] = RESOLUTION / 2 - sun.position * CelestialObject.scale
+    lock_camera_to_body(sun)
+    stars = draw.generate_stars(40)
     
-    stars = draw.generate_stars(40) 
-
     while running:
         WIN.fill(info.COLOR_BLACK)
         draw.draw_stars(stars, WIN)
         pygame.display.set_caption(f"Solar System Simulation - FPS: {clock.get_fps():.2f}")
-
+        
         running = handle_events()
         if not running:
             break
-
+        
         if deltatime > 0:
             info.TOTAL_TIME_ELAPSED += deltatime
-            
-            # Substep implementation for stability
             sub_dt = deltatime / SUBSTEPS
             
             # Compute initial acceleration for all bodies
@@ -113,27 +120,27 @@ def main():
                 for body in bodies:
                     body.update_position(sub_dt, bodies)
         
+        if selected_body is not None:
+            draw.indicator_for_planet(WIN, selected_body)
+            # Keep the selected planet at the center of the screen
+            info.mouse_motion[:] = RESOLUTION / 2 - (selected_body.position * CelestialObject.scale)
+        
         for body in bodies:
             body.draw(WIN, FONT)
-
+        
         for planet in planets:
             if show_name:
                 planet.draw_name(WIN, FONT)
             else:
-                planet.show_distances(WIN, FONT) 
-
-        for moon in moons:
-            if show_name:
-                pass
-                # moon.draw_name(WIN, FONT)
+                planet.show_distances(WIN, FONT)
         
         display_controls()
         draw.display_simulation_status(WIN, FONT, deltatime, info.TOTAL_TIME_ELAPSED)
-        draw.draw_scale_indicator(WIN, FONT) 
-
+        draw.draw_scale_indicator(WIN, FONT)
+        
         pygame.display.update()
         clock.tick(60)
-
+    
     pygame.quit()
 
 if __name__ == "__main__":

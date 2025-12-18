@@ -38,7 +38,9 @@ class CelestialObject:
         return self.position * self.scale + info.mouse_motion
 
     def draw(self, win, font):
-        pos = self.get_screen_position().astype(int)
+        self.screen_pos = self.get_screen_position()
+        
+        pos = self.screen_pos.astype(int)
         radius_px = max(int(self.radius), 3)
         pygame.draw.circle(win, self.color, pos, radius_px)
 
