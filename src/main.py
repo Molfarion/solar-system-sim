@@ -12,15 +12,14 @@ moons = create_moons(planets)
 bodies = planets + moons
 
 WIN = pygame.display.set_mode((info.WIDTH, info.HEIGHT))
-FONT = pygame.font.SysFont("comicsans", 16)
+FONT = pygame.font.SysFont(["ubuntumono", "arial", "sans-serif"], 16)
 RESOLUTION = np.array((info.WIDTH, info.HEIGHT))
-SUBSTEPS = 10  # Number of integration steps per frame for stability
+SUBSTEPS = 15  # Number of integration steps per frame for stability
 
 selected_body = None
 show_name = True
 dragging = False  
-deltatime = 86400
-info.TOTAL_TIME_ELAPSED = 0.0
+deltatime = 86400 # 1 day in seconds (default 1 day = 1 tick in simulation)
 
 def lock_camera_to_body(body):
     """Hard-lock camera so body stays at screen center."""
@@ -90,8 +89,9 @@ def display_controls():
             WIN.blit(surf, (10, info.HEIGHT - 150 + i * 20))
 
 def main():
-    global deltatime, selected_body  
+    global deltatime, selected_body
     
+    total_time_elapsed = 0.0
     clock = pygame.time.Clock()
     running = True
     sun = planets[0]
@@ -109,7 +109,7 @@ def main():
             break
         
         if deltatime > 0:
-            info.TOTAL_TIME_ELAPSED += deltatime
+            total_time_elapsed += deltatime
             sub_dt = deltatime / SUBSTEPS
             
             # Compute initial acceleration for all bodies
@@ -119,6 +119,9 @@ def main():
             for _ in range(SUBSTEPS):
                 for body in bodies:
                     body.update_position(sub_dt, bodies)
+            
+            for body in bodies:
+                body.store_orbit_point(total_time_elapsed)
         
         if selected_body is not None:
             draw.indicator_for_planet(WIN, selected_body)
@@ -135,7 +138,7 @@ def main():
                 planet.show_distances(WIN, FONT)
         
         display_controls()
-        draw.display_simulation_status(WIN, FONT, deltatime, info.TOTAL_TIME_ELAPSED)
+        draw.display_simulation_status(WIN, FONT, deltatime, total_time_elapsed, clock.get_fps())
         draw.draw_scale_indicator(WIN, FONT)
         
         pygame.display.update()

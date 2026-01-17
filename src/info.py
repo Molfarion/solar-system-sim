@@ -22,7 +22,6 @@ COLOR_BUTTON = (255, 255, 255)
 AU = 149.6e9          
 G = 6.67428e-11       
 
-TOTAL_TIME_ELAPSED = 0.0  
 DEFAULT_DELTATIME = 86400.0 
 last_deltatime = DEFAULT_DELTATIME 
 mouse_motion = np.array([0.0, 0.0]) # Camera offset vector

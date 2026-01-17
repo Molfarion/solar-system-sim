@@ -3,6 +3,10 @@ import pygame
 import info
 from celestial_object import CelestialObject
 
+SEC_IN_HOUR = 3600
+SEC_IN_DAY = 86400
+SEC_IN_YEAR = 31557600
+
 def generate_stars(num_stars=400):
     """Generates a list of random star coordinates and sizes."""
     stars = []
@@ -31,7 +35,7 @@ def draw_scale_indicator(win, font):
     distance_at_max_px = MAX_BAR_LENGTH_PX / current_scale
     AU_value = distance_at_max_px / info.AU
     
-    # Determine the "nice" label and distance
+    # Determine the label and distance
     if AU_value >= 1:
         nice_label_AU = 10**np.floor(np.log10(AU_value))
         label = f"{nice_label_AU:.0f} AU"
@@ -62,22 +66,36 @@ def draw_scale_indicator(win, font):
     win.blit(text_surface, (text_x, text_y))
 
 
-def display_simulation_status(win, font, deltatime, total_time_elapsed):
-    """Draws the current time speed, total elapsed time, and controls prompt."""
-    
+def display_simulation_status(win, font, deltatime, total_time_elapsed, current_fps):
+    """Draws the current time speed, total elapsed time, and controls prompt.""" 
     x_start = 10
     y_start = 10
     line_spacing = 20
     
-    time_speed_text = font.render(
-        f"Time Step: {deltatime / 86400:.2f} days/step",
+    sim_seconds_per_real_second = deltatime * current_fps
+    
+    # Determine the most readable unit for speed
+    if sim_seconds_per_real_second >= SEC_IN_YEAR:
+        speed_val = sim_seconds_per_real_second / SEC_IN_YEAR
+        unit = "years/s"
+    elif sim_seconds_per_real_second >= SEC_IN_DAY:
+        speed_val = sim_seconds_per_real_second / SEC_IN_DAY
+        unit = "days/s"
+    elif sim_seconds_per_real_second >= SEC_IN_HOUR:
+        speed_val = sim_seconds_per_real_second / SEC_IN_HOUR
+        unit = "hours/s"
+    else:
+        speed_val = sim_seconds_per_real_second
+        unit = "sec/s"
+
+    speed_text = font.render(
+        f"Sim Speed: {speed_val:.2f} {unit}",
         True, 
         info.COLOR_WHITE
     )
-    win.blit(time_speed_text, (x_start, y_start))
+    win.blit(speed_text, (x_start, y_start))
 
-    seconds_in_year = 365.25 * 86400
-    time_elapsed_years = total_time_elapsed / seconds_in_year
+    time_elapsed_years = total_time_elapsed / SEC_IN_YEAR
     time_elapsed_text = font.render(
         f"Time from start: {time_elapsed_years:.3f} years", 
         True, 

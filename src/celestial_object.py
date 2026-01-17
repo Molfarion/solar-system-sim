@@ -15,7 +15,9 @@ class CelestialObject:
         self.mass = mass
         self.color = color
         self.radius = radius
-        self.orbit = deque(maxlen=300)
+        self.orbit_data = deque() # List of (position_vector, sim_timestamp)
+        
+        self.tail_lifetime = 31557600
 
     def compute_acceleration(self, bodies):
         self.acceleration[:] = 0
@@ -32,7 +34,12 @@ class CelestialObject:
         self.position += self.velocity * dt
         self.compute_acceleration(bodies)
         self.velocity += 0.5 * self.acceleration * dt
-        self.orbit.append(self.position.copy())
+    
+    def store_orbit_point(self, total_time_elapsed):
+        self.orbit_data.append((self.position.copy(), total_time_elapsed))
+        
+        while self.orbit_data and (total_time_elapsed - self.orbit_data[0][1] > self.tail_lifetime):
+            self.orbit_data.popleft()
 
     def get_screen_position(self):
         return self.position * self.scale + info.mouse_motion
@@ -44,8 +51,10 @@ class CelestialObject:
         radius_px = max(int(self.radius), 3)
         pygame.draw.circle(win, self.color, pos, radius_px)
 
-        if len(self.orbit) > 2:
-            pts = (np.array(self.orbit) * self.scale + info.mouse_motion).astype(int)
+        if len(self.orbit_data) > 2:
+            positions = np.array([item[0] for item in self.orbit_data])
+            pts = (positions * self.scale + info.mouse_motion).astype(int)
+            
             pygame.draw.lines(win, self.color, False, pts, 1)
 
     def draw_name(self, win, font):
