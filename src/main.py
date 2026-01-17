@@ -46,7 +46,7 @@ def handle_events():
                         info.last_deltatime = deltatime
                         deltatime = 0
                     else:
-                        deltatime = getattr(info, 'last_deltatime', 86400)  # Default to 1 day
+                        deltatime = getattr(info, 'last_deltatime', 86400)
                 case pygame.K_c:
                     info.mouse_motion[:] = RESOLUTION / 2
                     selected_body = None  
@@ -71,7 +71,7 @@ def handle_events():
         elif event.type == pygame.MOUSEWHEEL:
             zoom_factor = 1.3 ** event.y
             CelestialObject.scale *= zoom_factor
-
+            
             if selected_body is None:
                 # Mouse-anchored zoom only when not locked to a body
                 old_scale = CelestialObject.scale / zoom_factor
@@ -121,7 +121,12 @@ def main():
                     body.update_position(sub_dt, bodies)
             
             for body in bodies:
-                body.store_orbit_point(total_time_elapsed)
+                is_selected = (body == selected_body)
+    
+                if hasattr(body, 'parent') and body.parent == selected_body:
+                    is_selected = True
+                    
+                body.store_orbit_point(total_time_elapsed, is_selected)
         
         if selected_body is not None:
             draw.indicator_for_planet(WIN, selected_body)
@@ -129,7 +134,7 @@ def main():
             info.mouse_motion[:] = RESOLUTION / 2 - (selected_body.position * CelestialObject.scale)
         
         for body in bodies:
-            body.draw(WIN, FONT)
+            body.draw(WIN)
         
         for planet in planets:
             if show_name:

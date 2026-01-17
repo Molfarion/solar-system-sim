@@ -18,6 +18,9 @@ class CelestialObject:
         self.orbit_data = deque() # List of (position_vector, sim_timestamp)
         
         self.tail_lifetime = 31557600
+        self.last_orbit_store_time = 0.0
+        self.base_orbit_store_interval = 86400 # Save orbit point once every 24 hours
+        self.detailed_orbit_interval = 3600
 
     def compute_acceleration(self, bodies):
         self.acceleration[:] = 0
@@ -35,27 +38,32 @@ class CelestialObject:
         self.compute_acceleration(bodies)
         self.velocity += 0.5 * self.acceleration * dt
     
-    def store_orbit_point(self, total_time_elapsed):
-        self.orbit_data.append((self.position.copy(), total_time_elapsed))
+    def store_orbit_point(self, total_time_elapsed, is_selected=False):
+        # Use detailed interval if this body is selected, otherwise use base interval
+        interval = self.detailed_orbit_interval if is_selected else self.base_orbit_store_interval
         
-        while self.orbit_data and (total_time_elapsed - self.orbit_data[0][1] > self.tail_lifetime):
-            self.orbit_data.popleft()
+        if total_time_elapsed - self.last_orbit_store_time >= interval:
+            self.orbit_data.append((self.position.copy(), total_time_elapsed))
+            self.last_orbit_store_time = total_time_elapsed
+            
+            while self.orbit_data and (total_time_elapsed - self.orbit_data[0][1] > self.tail_lifetime):
+                self.orbit_data.popleft()
 
     def get_screen_position(self):
         return self.position * self.scale + info.mouse_motion
 
-    def draw(self, win, font):
+    def draw(self, win):
         self.screen_pos = self.get_screen_position()
         
         pos = self.screen_pos.astype(int)
         radius_px = max(int(self.radius), 3)
         pygame.draw.circle(win, self.color, pos, radius_px)
 
-        if len(self.orbit_data) > 2:
+        if len(self.orbit_data) > 1:
             positions = np.array([item[0] for item in self.orbit_data])
             pts = (positions * self.scale + info.mouse_motion).astype(int)
             
-            pygame.draw.lines(win, self.color, False, pts, 1)
+            pygame.draw.aalines(win, self.color, False, pts, 1)
 
     def draw_name(self, win, font):
         x, y = self.get_screen_position()
