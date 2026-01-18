@@ -26,32 +26,37 @@ def draw_stars(stars, win):
         pygame.draw.circle(win, info.COLOR_WHITE, (int(x), int(y)), int(radius))
 
 def draw_scale_indicator(win, font):
-    """Calculates and draws a dynamic scale bar."""
-    
+    """Calculates and draws a dynamic scale bar with 'nice' intervals (1, 2, 5)."""
     MAX_BAR_LENGTH_PX = 150  
     MARGIN = 20
     
-    current_scale = CelestialObject.scale
-    distance_at_max_px = MAX_BAR_LENGTH_PX / current_scale
-    AU_value = distance_at_max_px / info.AU
+    current_scale = CelestialObject.scale  # px/meter
+    max_distance_m = MAX_BAR_LENGTH_PX / current_scale
     
-    # Determine the label and distance
-    if AU_value >= 1:
-        nice_label_AU = 10**np.floor(np.log10(AU_value))
-        label = f"{nice_label_AU:.0f} AU"
-        nice_distance_m = nice_label_AU * info.AU
-    elif AU_value >= 0.001:
-        nice_label_AU = 10**np.floor(np.log10(AU_value))
-        label = f"{nice_label_AU:.3f} AU"
-        nice_distance_m = nice_label_AU * info.AU
+    if max_distance_m < info.AU * 0.1:
+        unit = "km"
+        val = max_distance_m / 1000
     else:
-        distance_km = distance_at_max_px / 1000 
-        nice_label_km = 10**np.floor(np.log10(distance_km))
-        label = f"{nice_label_km:.0f} thousand km" 
-        nice_distance_m = nice_label_km * 1000
+        unit = "AU"
+        val = max_distance_m / info.AU
 
-    bar_length_px = int(nice_distance_m * current_scale)
+    exponent = np.floor(np.log10(val))
+    fraction = val / (10**exponent)
     
+    if fraction >= 5:
+        nice_val = 5
+    elif fraction >= 2:
+        nice_val = 2
+    else:
+        nice_val = 1
+    
+    final_value = nice_val * (10**exponent)
+    
+    actual_dist_m = final_value * (1000 if unit == "km" else info.AU)
+    bar_length_px = int(actual_dist_m * current_scale)
+    
+    label = f"{final_value:g} {unit}"
+
     start_x = info.WIDTH - MARGIN - bar_length_px
     end_x = info.WIDTH - MARGIN
     y_pos = info.HEIGHT - MARGIN
@@ -60,11 +65,9 @@ def draw_scale_indicator(win, font):
     pygame.draw.line(win, info.COLOR_WHITE, (start_x, y_pos - 5), (start_x, y_pos + 5), 2)
     pygame.draw.line(win, info.COLOR_WHITE, (end_x, y_pos - 5), (end_x, y_pos + 5), 2)
     
-    text_surface = font.render(label, True, info.COLOR_WHITE)
-    text_x = start_x + bar_length_px / 2 - text_surface.get_width() / 2
-    text_y = y_pos - 25
-    win.blit(text_surface, (text_x, text_y))
-
+    text_surf = font.render(label, True, info.COLOR_WHITE)
+    text_x = start_x + (bar_length_px // 2) - (text_surf.get_width() // 2)
+    win.blit(text_surf, (text_x, y_pos - 25))
 
 def display_simulation_status(win, font, deltatime, total_time_elapsed, current_fps):
     """Draws the current time speed, total elapsed time, and controls prompt.""" 

@@ -52,7 +52,7 @@ class CelestialObject:
     def get_screen_position(self):
         return self.position * self.scale + info.mouse_motion
 
-    def draw(self, win):
+    def draw(self, win, selected_body):
         self.screen_pos = self.get_screen_position()
         
         pos = self.screen_pos.astype(int)
@@ -68,7 +68,7 @@ class CelestialObject:
     def draw_name(self, win, font):
         x, y = self.get_screen_position()
         label = font.render(self.name, True, info.COLOR_WHITE)
-        win.blit(label, (x - label.get_width() / 2, y - 25))
+        win.blit(label, (x - label.get_width() / 2, y - 35))
 
     def show_distances(self, win, font):
         if CelestialObject.sun is None or self is CelestialObject.sun:
@@ -80,6 +80,6 @@ class CelestialObject:
         distance_au = np.linalg.norm(distance_vector) / info.AU
 
         text = font.render(f"{distance_au:.4f} AU", True, info.COLOR_WHITE)
-        text_y = y - text.get_height() / 2 - 45
+        text_y = y - text.get_height() / 2 - 40
         
         win.blit(text, (x - text.get_width() / 2, text_y))

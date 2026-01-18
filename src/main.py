@@ -2,6 +2,7 @@ import pygame
 import numpy as np
 import info
 import draw
+from moon import Moon
 from celestial_object import CelestialObject
 from system import load_planets, create_moons
 
@@ -19,7 +20,7 @@ SUBSTEPS = 15  # Number of integration steps per frame for stability
 selected_body = None
 show_name = True
 dragging = False  
-deltatime = 86400 # 1 day in seconds (default 1 day = 1 tick in simulation)
+deltatime = 43200 # (default 12 hours = 1 tick in simulation)
 
 def lock_camera_to_body(body):
     """Hard-lock camera so body stays at screen center."""
@@ -46,26 +47,33 @@ def handle_events():
                         info.last_deltatime = deltatime
                         deltatime = 0
                     else:
-                        deltatime = getattr(info, 'last_deltatime', 86400)
+                        deltatime = getattr(info, 'last_deltatime', 43200)
                 case pygame.K_c:
                     info.mouse_motion[:] = RESOLUTION / 2
-                    selected_body = None  
+                    selected_body = None
+                case pygame.K_q:
+                    for body in bodies:
+                        body.orbit_data.clear()  
         
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             dragging = True
             mx, my = pygame.mouse.get_pos()
+
             selected_body = None
+
             for body in bodies:
-                dist = np.hypot(*(body.screen_pos - np.array([mx, my])))
-                if dist < body.radius * CelestialObject.scale + 20:
+                dist = np.linalg.norm(body.screen_pos - np.array([mx, my]))
+                click_radius = max(body.radius * CelestialObject.scale, 15) 
+                
+                if dist < click_radius:
                     selected_body = body
                     break
+            
         
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             dragging = False
         
         elif event.type == pygame.MOUSEMOTION and dragging:
-            selected_body = None
             info.mouse_motion += np.array(event.rel)
         
         elif event.type == pygame.MOUSEWHEEL:
@@ -121,12 +129,14 @@ def main():
                     body.update_position(sub_dt, bodies)
             
             for body in bodies:
-                is_selected = (body == selected_body)
-    
-                if hasattr(body, 'parent') and body.parent == selected_body:
-                    is_selected = True
-                    
-                body.store_orbit_point(total_time_elapsed, is_selected)
+                # Moons only store data if parent is selected
+                if isinstance(body, Moon):
+                    if body.parent == selected_body:
+                        body.store_orbit_point(total_time_elapsed, is_selected=True)
+                else:
+                    # Planets always store data
+                    is_selected = (body == selected_body)
+                    body.store_orbit_point(total_time_elapsed, is_selected)
         
         if selected_body is not None:
             draw.indicator_for_planet(WIN, selected_body)
@@ -134,13 +144,12 @@ def main():
             info.mouse_motion[:] = RESOLUTION / 2 - (selected_body.position * CelestialObject.scale)
         
         for body in bodies:
-            body.draw(WIN)
-        
-        for planet in planets:
+            body.draw(WIN, selected_body)
             if show_name:
-                planet.draw_name(WIN, FONT)
+                body.draw_name(WIN, FONT)
             else:
-                planet.show_distances(WIN, FONT)
+                body.show_distances(WIN, FONT)
+
         
         display_controls()
         draw.display_simulation_status(WIN, FONT, deltatime, total_time_elapsed, clock.get_fps())
