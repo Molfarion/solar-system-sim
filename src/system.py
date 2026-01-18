@@ -4,7 +4,7 @@ from celestial_object import CelestialObject
 from moon import Moon
 
 def load_planets():
-    df = pd.read_csv("src/initial_planets.csv")
+    df = pd.read_csv("data/initial_planets.csv")
     planets = []
 
     for _, row in df.iterrows():
@@ -23,7 +23,7 @@ def load_planets():
 def create_moons(planets):
     planet_dict = {planet.name: planet for planet in planets}
     
-    df = pd.read_csv("src/moons_vectors.csv")
+    df = pd.read_csv("data/moons_vectors.csv")
     moons = []
 
     for _, row in df.iterrows():
