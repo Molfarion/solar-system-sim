@@ -1,6 +1,11 @@
 from astroquery.jplhorizons import Horizons
 import pandas as pd
 import numpy as np
+import os
+
+# Output to project data directory regardless of cwd
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DATA_DIR = os.path.join(_PROJECT_ROOT, "data")
 
 MOON_DATA = {
     'Moon':    {'id': '301', 'parent_id': '399', 'parent_name': 'Earth',   'mass': 7.342e22,  'color': (128, 128, 128), 'radius': 2},
@@ -39,4 +44,5 @@ for name, props in MOON_DATA.items():
     })
 
 df = pd.DataFrame(rows)
-df.to_csv("moons_vectors.csv", index=False)
+os.makedirs(_DATA_DIR, exist_ok=True)
+df.to_csv(os.path.join(_DATA_DIR, "moons_vectors.csv"), index=False)

@@ -1,5 +1,10 @@
 from astroquery.jplhorizons import Horizons
 import pandas as pd
+import os
+
+# Output to project data directory regardless of cwd
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DATA_DIR = os.path.join(_PROJECT_ROOT, "data")
 
 PLANET_DATA = {
     'Sun':     {'id': 10, 'mass': 1.98847e30, 'color': 'COLOR_SUN',     'radius': 13},
@@ -36,4 +41,5 @@ for name, props in PLANET_DATA.items():
     })
 
 df = pd.DataFrame(rows)
-df.to_csv("inital_planets.csv", index=False)
+os.makedirs(_DATA_DIR, exist_ok=True)
+df.to_csv(os.path.join(_DATA_DIR, "initial_planets.csv"), index=False)

@@ -2,7 +2,6 @@ import numpy as np
 
 WIDTH = 1200
 HEIGHT = 800
-MINIMUM_RADIUS = 10 
 
 COLOR_BLACK = (0, 0, 0)
 COLOR_WHITE = (255, 255, 255)
@@ -19,6 +18,7 @@ controls = [
     "'+' / '-' to speed up / slow down",
     "Space to Pause/Resume",
     "'C' to center view on origin (0,0)",
+    "'Q' to clear orbit trails",
     "'Z' to toggle Names / Distances",
     "Hold 'X' to see this control list",
 ]

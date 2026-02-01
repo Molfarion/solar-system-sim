@@ -1,10 +1,25 @@
+import os
 import numpy as np
 import pandas as pd
 from celestial_object import CelestialObject
 from moon import Moon
 
+# Resolve data paths relative to project root (works from any cwd)
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_PLANETS_CSV = os.path.join(_PROJECT_ROOT, "data", "initial_planets.csv")
+_MOONS_CSV = os.path.join(_PROJECT_ROOT, "data", "moons_vectors.csv")
+
+
 def load_planets():
-    df = pd.read_csv("data/initial_planets.csv")
+    if not os.path.isfile(_PLANETS_CSV):
+        raise FileNotFoundError(
+            f"Planets data not found: {_PLANETS_CSV}. "
+            "Run from project root or ensure data/initial_planets.csv exists."
+        )
+    try:
+        df = pd.read_csv(_PLANETS_CSV)
+    except Exception as e:
+        raise RuntimeError(f"Failed to read planets CSV {_PLANETS_CSV}: {e}") from e
     planets = []
 
     for _, row in df.iterrows():
@@ -20,10 +35,16 @@ def load_planets():
         )
     return planets
 
+
 def create_moons(planets):
     planet_dict = {planet.name: planet for planet in planets}
-    
-    df = pd.read_csv("data/moons_vectors.csv")
+
+    if not os.path.isfile(_MOONS_CSV):
+        return []
+    try:
+        df = pd.read_csv(_MOONS_CSV)
+    except Exception as e:
+        raise RuntimeError(f"Failed to read moons CSV {_MOONS_CSV}: {e}") from e
     moons = []
 
     for _, row in df.iterrows():
