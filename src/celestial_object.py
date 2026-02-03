@@ -15,7 +15,7 @@ class CelestialObject:
         self.mass = mass
         self.color = color
         self.radius = radius
-        self.orbit_data = deque() # List of (position_vector, sim_timestamp)
+        self.orbit_data = deque(maxlen=1000) # List of (position_vector, sim_timestamp)
         
         self.tail_lifetime = 31557600
         self.last_orbit_store_time = 0.0

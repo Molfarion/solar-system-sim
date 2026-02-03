@@ -1,25 +1,31 @@
+from datetime import datetime, timedelta
 import numpy as np
 import pygame
 import info
+import config
 from celestial_object import CelestialObject
 
 SEC_IN_HOUR = 3600
 SEC_IN_DAY = 86400
 SEC_IN_YEAR = 31557600
 
+def sim_seconds_to_date(total_seconds):
+    """Convert simulation seconds since epoch to a calendar date."""
+    return config.SIM_EPOCH + timedelta(seconds=total_seconds)
+
 def generate_stars(num_stars=400):
     """Generates a list of random star coordinates and sizes."""
     stars = []
     for _ in range(num_stars):
-        x = np.random.randint(info.WIDTH)
-        y = np.random.randint(info.HEIGHT)
+        x = np.random.randint(config.WIDTH)
+        y = np.random.randint(config.HEIGHT)
         radius = 1
         stars.append((x, y, radius))
     return stars
 
 def indicator_for_planet(win, selected_body):
     pygame.draw.circle(win, (255, 255, 255), 
-                             selected_body.screen_pos.astype(int), 
+                             selected_body.get_screen_position().astype(int), 
                              int(selected_body.radius + 5), 1)
 def draw_stars(stars, win):
     for x, y, radius in stars:
@@ -57,9 +63,9 @@ def draw_scale_indicator(win, font):
     
     label = f"{final_value:g} {unit}"
 
-    start_x = info.WIDTH - MARGIN - bar_length_px
-    end_x = info.WIDTH - MARGIN
-    y_pos = info.HEIGHT - MARGIN
+    start_x = config.WIDTH - MARGIN - bar_length_px
+    end_x = config.WIDTH - MARGIN
+    y_pos = config.HEIGHT - MARGIN
     
     pygame.draw.line(win, info.COLOR_WHITE, (start_x, y_pos), (end_x, y_pos), 2)
     pygame.draw.line(win, info.COLOR_WHITE, (start_x, y_pos - 5), (start_x, y_pos + 5), 2)
@@ -68,6 +74,13 @@ def draw_scale_indicator(win, font):
     text_surf = font.render(label, True, info.COLOR_WHITE)
     text_x = start_x + (bar_length_px // 2) - (text_surf.get_width() // 2)
     win.blit(text_surf, (text_x, y_pos - 25))
+
+def display_controls(win, font):
+    """Displays controls if 'X' is pressed."""
+    if pygame.key.get_pressed()[pygame.K_x]:
+        for i, text in enumerate(info.controls):
+            surf = font.render(text, True, info.COLOR_WHITE)
+            win.blit(surf, (10, config.HEIGHT - 170 + i * 20))
 
 def display_simulation_status(win, font, deltatime, total_time_elapsed, current_fps):
     """Draws the current time speed, total elapsed time, and controls prompt.""" 
@@ -100,15 +113,23 @@ def display_simulation_status(win, font, deltatime, total_time_elapsed, current_
 
     time_elapsed_years = total_time_elapsed / SEC_IN_YEAR
     time_elapsed_text = font.render(
-        f"Time from start: {time_elapsed_years:.3f} years", 
-        True, 
+        f"Time from start: {time_elapsed_years:.3f} years",
+        True,
         info.COLOR_WHITE
     )
     win.blit(time_elapsed_text, (x_start, y_start + line_spacing))
 
+    sim_date = sim_seconds_to_date(total_time_elapsed)
+    date_text = font.render(
+        f"Date: {sim_date.strftime('%Y-%m-%d')}",
+        True,
+        info.COLOR_WHITE
+    )
+    win.blit(date_text, (x_start, y_start + 2 * line_spacing))
+
     controls_text = "Hold X to see the controls"
     controls_surface = font.render(controls_text, True, info.COLOR_WHITE)
     
-    controls_x = info.WIDTH - 10 - controls_surface.get_width()
+    controls_x = config.WIDTH - 10 - controls_surface.get_width()
     
     win.blit(controls_surface, (controls_x, y_start))

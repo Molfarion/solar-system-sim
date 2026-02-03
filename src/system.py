@@ -67,3 +67,9 @@ def create_moons(planets):
             moons.append(moon)
     
     return moons
+
+def restart_system():
+    new_planets = load_planets()
+    new_moons = create_moons(new_planets)
+    
+    return new_planets, new_moons
