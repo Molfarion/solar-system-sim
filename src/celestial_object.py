@@ -28,7 +28,7 @@ class CelestialObject:
             if other is self:
                 continue
             r_vec = other.position - self.position
-            r_mag = np.linalg.norm(r_vec)
+            r_mag = (r_vec[0]**2 + r_vec[1]**2)**0.5
             if r_mag > 0:
                 self.acceleration += info.G * other.mass / r_mag**3 * r_vec
 
@@ -63,7 +63,7 @@ class CelestialObject:
             positions = np.array([item[0] for item in self.orbit_data])
             pts = (positions * self.scale + info.mouse_motion).astype(int)
             
-            pygame.draw.aalines(win, self.color, False, pts, 1)
+            pygame.draw.lines(win, self.color, False, pts, 1)
 
     def draw_name(self, win, font):
         x, y = self.get_screen_position()

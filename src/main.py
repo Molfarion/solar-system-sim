@@ -4,15 +4,11 @@ import info
 import draw
 import config
 from simulation import Simulation
-from moon import Moon
-from celestial_object import CelestialObject
-from system import load_planets, create_moons, restart_system
 
 pygame.init()
 
 WIN = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
 FONT = pygame.font.SysFont(["ubuntumono", "arial", "sans-serif"], 16)
-SUBSTEPS = config.SUBSTEPS
 
 def main():
     sim = Simulation() 

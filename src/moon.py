@@ -23,7 +23,7 @@ class Moon(CelestialObject):
         self.acceleration[:] = 0
         
         r_vec = self.parent.position - self.position
-        r_mag = np.linalg.norm(r_vec)
+        r_mag = (r_vec[0]**2 + r_vec[1]**2)**0.5
         if r_mag > 0:
             self.acceleration += info.G * self.parent.mass / r_mag**3 * r_vec
         
@@ -54,7 +54,7 @@ class Moon(CelestialObject):
                 
                 pts = (rel_positions * current_scale + parent_screen_pos).astype(int)
                 if len(pts) > 1:
-                    pygame.draw.aalines(win, self.color, False, pts)
+                    pygame.draw.lines(win, self.color, False, pts)
     
     def draw_name(self, win, font):
         current_scale = CelestialObject.scale 
