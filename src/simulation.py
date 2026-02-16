@@ -61,7 +61,9 @@ class Simulation:
                 self.camera.set_target(None)
 
                 for body in self.bodies:
-                    dist = np.linalg.norm(body.screen_pos - np.array([mx, my]))
+                    # Calculate live screen position for accurate clicking
+                    screen_pos = self.camera.world_to_screen(body.position)
+                    dist = np.linalg.norm(screen_pos - np.array([mx, my]))
                     click_radius = max(body.radius * self.camera.scale, 15) 
                     if dist < click_radius:
                         self.selected_body = body
@@ -94,14 +96,12 @@ class Simulation:
                     body.update_position(sub_dt, self.bodies)
             
             for body in self.bodies:
-                # Moons only store data if parent is selected
+                is_selected = (body == self.selected_body)
                 if isinstance(body, Moon):
-                    if body.parent == self.selected_body:
-                        body.store_orbit_point(self.total_time_elapsed, is_selected=True)
-                else:
-                    # Planets always store data
-                    is_selected = (body == self.selected_body)
-                    body.store_orbit_point(self.total_time_elapsed, is_selected)
+                    # Also consider parent selection for detailed orbits
+                    is_selected = is_selected or (body.parent == self.selected_body)
+                
+                body.store_orbit_point(self.total_time_elapsed, is_selected)
         return
     
     def render(self, WIN, FONT, clock):
@@ -111,7 +111,7 @@ class Simulation:
             draw.indicator_for_planet(WIN, self.selected_body, self.camera)
         
         for body in self.bodies:
-            body.draw(WIN, self.camera)
+            body.draw(WIN, self.camera, self.selected_body)
             if self.show_name:
                 body.draw_name(WIN, FONT, self.camera)
             else:

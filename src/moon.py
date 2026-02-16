@@ -46,7 +46,7 @@ class Moon(CelestialObject):
         radius_px = max(int(self.radius), 3)
         pygame.draw.circle(win, self.color, self.screen_pos, radius_px)
 
-        if selected_body == self.parent and len(self.orbit_data) > 2:
+        if (selected_body == self or selected_body == self.parent) and len(self.orbit_data) > 2:
             if camera.scale >= self.min_scale_for_moons:
                 parent_screen_pos = self.parent.get_screen_position(camera)
                 rel_positions = np.array([item[0] for item in self.orbit_data])
@@ -59,10 +59,9 @@ class Moon(CelestialObject):
         if camera.scale >= self.min_scale_for_moons:
             return super().draw_name(win, font, camera)
     
-    def show_distances(self, win, font):
-        current_scale = CelestialObject.scale 
-        if current_scale >= self.min_scale_for_moons:
-            x, y = self.get_screen_position()
+    def show_distances(self, win, font, camera):
+        if camera.scale >= self.min_scale_for_moons:
+            x, y = self.get_screen_position(camera)
             
             distance_vector = self.position - self.parent.position
             distance_km = np.linalg.norm(distance_vector)/1000

@@ -49,7 +49,7 @@ class CelestialObject:
     def get_screen_position(self, camera):
         return camera.world_to_screen(self.position)
 
-    def draw(self, win, camera):
+    def draw(self, win, camera, selected_body=None):
         self.screen_pos = self.get_screen_position(camera)
         
         pos = self.screen_pos.astype(int)
