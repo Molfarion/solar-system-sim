@@ -41,25 +41,23 @@ class Moon(CelestialObject):
             while self.orbit_data and (total_time_elapsed - self.orbit_data[0][1] > self.tail_lifetime):
                 self.orbit_data.popleft()
 
-    def draw(self, win, selected_body=None):
-        self.screen_pos = self.get_screen_position().astype(int)
+    def draw(self, win, camera, selected_body=None):
+        self.screen_pos = self.get_screen_position(camera).astype(int)
         radius_px = max(int(self.radius), 3)
         pygame.draw.circle(win, self.color, self.screen_pos, radius_px)
 
         if selected_body == self.parent and len(self.orbit_data) > 2:
-            current_scale = CelestialObject.scale 
-            if current_scale >= self.min_scale_for_moons:
-                parent_screen_pos = self.parent.get_screen_position()
+            if camera.scale >= self.min_scale_for_moons:
+                parent_screen_pos = self.parent.get_screen_position(camera)
                 rel_positions = np.array([item[0] for item in self.orbit_data])
                 
-                pts = (rel_positions * current_scale + parent_screen_pos).astype(int)
+                pts = (rel_positions * camera.scale + parent_screen_pos).astype(int)
                 if len(pts) > 1:
                     pygame.draw.lines(win, self.color, False, pts)
     
-    def draw_name(self, win, font):
-        current_scale = CelestialObject.scale 
-        if current_scale >= self.min_scale_for_moons:
-            return super().draw_name(win, font)
+    def draw_name(self, win, font, camera):
+        if camera.scale >= self.min_scale_for_moons:
+            return super().draw_name(win, font, camera)
     
     def show_distances(self, win, font):
         current_scale = CelestialObject.scale 

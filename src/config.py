@@ -9,7 +9,7 @@ HEIGHT = 800
 DEFAULT_DELTATIME = 43200.0  # 12 hours
 
 # Physics / integration
-SUBSTEPS = 15  # Integration substeps per frame for stability
+SUBSTEPS = 20  # Integration substeps per frame for stability
 
 # Visuals
 STAR_COUNT = 40  # Number of background stars to generate

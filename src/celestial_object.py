@@ -4,9 +4,6 @@ from collections import deque
 import info
 
 class CelestialObject:
-    scale = 150 / info.AU
-    sun = None   # set in main.py
-
     def __init__(self, name, position, velocity, mass, color, radius):
         self.name = name
         self.position = np.array(position, dtype=np.float64)
@@ -49,11 +46,11 @@ class CelestialObject:
             while self.orbit_data and (total_time_elapsed - self.orbit_data[0][1] > self.tail_lifetime):
                 self.orbit_data.popleft()
 
-    def get_screen_position(self):
-        return self.position * self.scale + info.mouse_motion
+    def get_screen_position(self, camera):
+        return camera.world_to_screen(self.position)
 
-    def draw(self, win, selected_body):
-        self.screen_pos = self.get_screen_position()
+    def draw(self, win, camera):
+        self.screen_pos = self.get_screen_position(camera)
         
         pos = self.screen_pos.astype(int)
         radius_px = max(int(self.radius), 3)
@@ -61,22 +58,22 @@ class CelestialObject:
 
         if len(self.orbit_data) > 1:
             positions = np.array([item[0] for item in self.orbit_data])
-            pts = (positions * self.scale + info.mouse_motion).astype(int)
+            pts = camera.world_to_screen(positions).astype(int)
             
             pygame.draw.lines(win, self.color, False, pts, 1)
 
-    def draw_name(self, win, font):
-        x, y = self.get_screen_position()
+    def draw_name(self, win, font, camera):
+        x, y = self.get_screen_position(camera)
         label = font.render(self.name, True, info.COLOR_WHITE)
         win.blit(label, (x - label.get_width() / 2, y - 35))
 
-    def show_distances(self, win, font):
-        if CelestialObject.sun is None or self is CelestialObject.sun:
+    def show_distances(self, win, font, camera, sun):
+        if sun is None or self is sun:
             return
 
-        x, y = self.get_screen_position()
+        x, y = self.get_screen_position(camera)
         
-        distance_vector = self.position - CelestialObject.sun.position
+        distance_vector = self.position - sun.position
         distance_au = np.linalg.norm(distance_vector) / info.AU
 
         text = font.render(f"{distance_au:.4f} AU", True, info.COLOR_WHITE)

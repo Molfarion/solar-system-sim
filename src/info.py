@@ -10,7 +10,6 @@ G = 6.67428e-11
 
 DEFAULT_DELTATIME = config.DEFAULT_DELTATIME
 last_deltatime = DEFAULT_DELTATIME
-mouse_motion = np.array([0.0, 0.0])  # Camera offset vector
 
 controls = [
     "Mousewheel Up/Down to zoom in/out",

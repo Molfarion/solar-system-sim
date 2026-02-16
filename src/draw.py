@@ -23,20 +23,20 @@ def generate_stars(num_stars=400):
         stars.append((x, y, radius))
     return stars
 
-def indicator_for_planet(win, selected_body):
+def indicator_for_planet(win, selected_body, camera):
     pygame.draw.circle(win, (255, 255, 255), 
-                             selected_body.get_screen_position().astype(int), 
+                             selected_body.get_screen_position(camera).astype(int), 
                              int(selected_body.radius + 5), 1)
 def draw_stars(stars, win):
     for x, y, radius in stars:
         pygame.draw.circle(win, info.COLOR_WHITE, (int(x), int(y)), int(radius))
 
-def draw_scale_indicator(win, font):
+def draw_scale_indicator(win, font, camera):
     """Calculates and draws a dynamic scale bar with 'nice' intervals (1, 2, 5)."""
     MAX_BAR_LENGTH_PX = 150  
     MARGIN = 20
     
-    current_scale = CelestialObject.scale  # px/meter
+    current_scale = camera.scale  # px/meter
     max_distance_m = MAX_BAR_LENGTH_PX / current_scale
     
     if max_distance_m < info.AU * 0.1:

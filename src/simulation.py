@@ -4,7 +4,7 @@ import system
 import config
 import info
 import draw
-from celestial_object import CelestialObject
+from camera import Camera
 from moon import Moon
 
 class Simulation:
@@ -13,14 +13,17 @@ class Simulation:
         self.moons = system.create_moons(self.planets)
         self.bodies = self.planets + self.moons
         
-        self.selected_body = self.planets[0] if self.planets else None
+        self.camera = Camera(config.WIDTH, config.HEIGHT, 150 / info.AU)
+        self.sun = self.planets[0] if self.planets else None
+        
+        self.selected_body = self.sun
+        if self.selected_body:
+            self.camera.set_target(self.selected_body)
+
         self.show_name = True
         self.dragging = False
         self.deltatime = config.DEFAULT_DELTATIME
         self.total_time_elapsed = 0.0
-        
-        if self.selected_body:
-            CelestialObject.sun = self.selected_body
 
     def handle_events(self):
         """Handles user input events. Returns False if the game should quit."""
@@ -43,7 +46,7 @@ class Simulation:
                         else:
                             self.deltatime = getattr(self, 'last_deltatime', 43200)
                     case pygame.K_c:
-                        info.mouse_motion[:] = info.RESOLUTION / 2
+                        self.camera.center_on_origin()
                         self.selected_body = None
                     case pygame.K_q:
                         for body in self.bodies:
@@ -55,30 +58,25 @@ class Simulation:
                 self.dragging = True
                 mx, my = pygame.mouse.get_pos()
                 self.selected_body = None
+                self.camera.set_target(None)
 
                 for body in self.bodies:
-                    # body.screen_pos needs to be calculated in your draw/update logic
                     dist = np.linalg.norm(body.screen_pos - np.array([mx, my]))
-                    click_radius = max(body.radius * CelestialObject.scale, 15) 
+                    click_radius = max(body.radius * self.camera.scale, 15) 
                     if dist < click_radius:
                         self.selected_body = body
+                        self.camera.set_target(body)
                         break
             
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.dragging = False
             
             elif event.type == pygame.MOUSEMOTION and self.dragging:
-                info.mouse_motion += np.array(event.rel)
+                self.camera.handle_pan(event.rel)
             
             elif event.type == pygame.MOUSEWHEEL:
                 zoom_factor = 1.3 ** event.y
-                CelestialObject.scale *= zoom_factor
-                
-                if self.selected_body is None:
-                    old_scale = CelestialObject.scale / zoom_factor
-                    mouse_screen = np.array(pygame.mouse.get_pos(), dtype=float)
-                    world_pos = (mouse_screen - info.mouse_motion) / old_scale
-                    info.mouse_motion = mouse_screen - world_pos * CelestialObject.scale
+                self.camera.handle_zoom(zoom_factor, np.array(pygame.mouse.get_pos()))
         
         return True
     
@@ -107,25 +105,26 @@ class Simulation:
         return
     
     def render(self, WIN, FONT, clock):
+        self.camera.update()
 
         if self.selected_body is not None:
-            # Keep the selected planet at the center of the screen
-            info.mouse_motion[:] = info.RESOLUTION / 2 - self.selected_body.position * CelestialObject.scale
-            draw.indicator_for_planet(WIN, self.selected_body)
+            draw.indicator_for_planet(WIN, self.selected_body, self.camera)
         
         for body in self.bodies:
-            body.draw(WIN, self.selected_body)
+            body.draw(WIN, self.camera)
             if self.show_name:
-                body.draw_name(WIN, FONT)
+                body.draw_name(WIN, FONT, self.camera)
             else:
-                body.show_distances(WIN, FONT)
+                if isinstance(body, Moon):
+                    body.show_distances(WIN, FONT, self.camera)
+                else:
+                    body.show_distances(WIN, FONT, self.camera, self.sun)
         
         draw.display_controls(WIN, FONT)
         draw.display_simulation_status(WIN, FONT, self.deltatime, self.total_time_elapsed, clock.get_fps())
-        draw.draw_scale_indicator(WIN, FONT)
+        draw.draw_scale_indicator(WIN, FONT, self.camera)
         return 
 
     def restart(self):
         """Reset the simulation state to initial CSV values."""
         self.__init__()
-        print("Simulation state reloaded from data files.")
